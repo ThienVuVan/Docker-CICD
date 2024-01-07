@@ -1,0 +1,32 @@
+version: "3.4"
+
+services:
+  app:
+    image: learning-docker/docker-node-mongo-redis:production
+    volumes:
+      - ./public/images:/app/public/images
+      # - ./:/app # mount từ môi trường gốc vào trong để nếu các bạn thay đổi code thì bên trong sẽ tự động cập nhật
+    environment: # phần này ta định nghĩa ở file .env nhé
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PORT=${PORT}
+    ports:
+      - "${PORT}:${PORT}" # phần này ta định nghĩa ở file .env nhé
+    restart: unless-stopped
+    depends_on:
+        - redis
+        - db
+  
+  db:
+    image: mongo
+    volumes:
+      - .docker/data/db:/data/db
+    restart: unless-stopped
+  
+  redis:
+    image: redis:5-alpine
+    volumes:
+      - .docker/data/redis:/data
+    restart: unless-stopped

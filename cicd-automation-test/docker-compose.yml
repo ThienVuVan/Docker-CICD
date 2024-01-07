@@ -1,0 +1,15 @@
+version: "3.4"
+
+services:
+  app:
+    image: learning-docker:cicd-automation-test
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    env_file: .env
+
+  db:
+    image: mongo
+    volumes:
+      - .docker/data/db:/data/db
+    restart: unless-stopped

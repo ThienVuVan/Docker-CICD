@@ -1,0 +1,10 @@
+version: '3.6'
+services:
+  app:
+    image: python-project:v1
+    container_name: python-project
+    restart: always
+    ports:
+      - '${PUBLIC_PORT}:${PORT}'
+    environment:
+      PORT: ${PORT}

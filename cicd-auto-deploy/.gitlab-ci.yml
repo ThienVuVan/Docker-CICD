@@ -1,0 +1,70 @@
+image: docker:19
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - release
+
+before_script:
+  - docker version
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build:
+  stage: build
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+.tests:
+  stage: test
+  before_script:
+    - apk add --no-cache py3-pip py3-setuptools python3 python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - docker-compose version
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+
+linting:
+  extends: .tests
+  script:
+    - docker-compose up -d
+    - sleep 15
+    - docker-compose exec -T app npm run lint
+
+jest:
+  extends: .tests
+  script:
+    - docker-compose up -d
+    - sleep 15
+    - docker-compose exec -T app npm run test
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+  artifacts:
+    paths:
+    - coverage/
+
+release-tag:
+  variables:
+    GIT_STRATEGY: none
+  stage: release
+  except:
+    - master
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+release-latest:
+  variables:
+    GIT_STRATEGY: none
+  stage: release
+  only:
+    - master
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
