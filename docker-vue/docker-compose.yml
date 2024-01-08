@@ -1,0 +1,10 @@
+version: '3.6'
+services:
+  app:
+    image: vue-project:v1
+    container_name: vue-project
+    restart: always
+    ports:
+      - '${PUBLIC_PORT}:${PORT}'
+
+# docker compose up -d

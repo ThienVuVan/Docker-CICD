@@ -1,0 +1,6 @@
+node_modules
+.docker
+public/images/*
+.env
+Dockerfile
+docker-compose.yml

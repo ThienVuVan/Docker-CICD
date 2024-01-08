@@ -1,32 +1,79 @@
 version: "3.4"
 
+networks:
+  db-network:
+    driver: bridge
+    name: db_network
+  redis-network:
+    driver: bridge
+    name: redis-network
+
 services:
   app:
-    image: learning-docker/docker-node-mongo-redis:production
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
     volumes:
-      - ./public/images:/app/public/images
-      # - ./:/app # mount từ môi trường gốc vào trong để nếu các bạn thay đổi code thì bên trong sẽ tự động cập nhật
-    environment: # phần này ta định nghĩa ở file .env nhé
+      - ./:/app
+    environment:
       - DB_HOST=${DB_HOST}
       - DB_NAME=${DB_NAME}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
       - PORT=${PORT}
     ports:
-      - "${PORT}:${PORT}" # phần này ta định nghĩa ở file .env nhé
+      - "${PORT}:${PORT}"
     restart: unless-stopped
     depends_on:
         - redis
         - db
+    networks:
+      - db-network
+      - redis-network
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:${PORT} || exit 1z
+      interval: 30s
+      timeout: 10s
+      retries: 5
   
   db:
     image: mongo
+    container_name: db
     volumes:
       - .docker/data/db:/data/db
     restart: unless-stopped
+    networks:
+      - db-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo db:27017/speech-api --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 5
   
   redis:
     image: redis:5-alpine
+    container_name: redis
     volumes:
       - .docker/data/redis:/data
     restart: unless-stopped
+    networks:
+      - redis-network
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
+# docker-compose up --build -> build lại ngay cả khi image đã tồn tại
+# nhớ chạy exec tải thư viện cho node
+
+#docker-compose exec app sh
+#Tiếp theo ta cài CURL để tạo request http
+#apk add curl
+# curl db:27017 (port db)
+# curl redis:6379 (port redis)
+
+
+

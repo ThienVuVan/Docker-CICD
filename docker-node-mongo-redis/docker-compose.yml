@@ -1,0 +1,54 @@
+version: '3.6'
+services:
+  app:
+    image: node-bd-rd-project:v1
+    container_name: node-db-redis
+    restart: always
+    volumes:
+      - ./:/app
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PORT=${PORT}
+    ports:
+      - '${PORT}:${PORT}'
+    depends_on:
+      - db
+      - redis
+  
+  db:
+    image: mongo:4.4
+    container_name: mongodb
+    restart: always
+    volumes:
+      - /docker/data/db:/data/db
+  
+  redis:
+    image: redis:5-alpine
+    container_name: redis
+    restart: always
+    volumes:
+      - /docker/data/redis:/data
+
+# volumes:
+#   mongodata:
+
+# khi chạy docker compose này, node_modules trong container sẽ bị mất, vì chúng ta mount volumes muốn code ngoài
+# đổi thì code trong đổi bằng nodemon, vô tình bên ngoài đồng bộ vào bên trong làm mất node_module
+# giải pháp là chạy npm install với môi trường ngoài, nhưng chạy bằng intermediate container, vì ta không hề có
+# node ở môi trường ngoài
+# MacOS + Linux
+# docker run --rm -v $(pwd):/app -w /app node:16-alpine npm install
+
+# Nếu bạn đang dùng Windows thì command trên sẽ như sau:
+
+# Với Git bash
+# docker run --rm -v "/$(pwd)":/app -w //app node:16-alpine npm install
+
+# Với PowerShell
+# docker run --rm -v "$(pwd):/app" -w /app node:16-alpine npm install
+
+# Với Command Prompt
+# docker run --rm -v "%cd%:/app" -w /app node:16-alpine npm install

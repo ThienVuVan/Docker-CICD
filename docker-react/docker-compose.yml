@@ -1,0 +1,35 @@
+version: '3.6'
+
+services:
+  app:
+    image: nginx:1.17-alpine
+    container_name: react-project
+    volumes:
+      - ./dist:/usr/share/nginx/html
+    ports:
+      - '3000:80'
+
+# docker run --rm -v "$(pwd):/app" -w /app node:16-alpine npm install ; npm run build
+# một cách để không cần viết Dockerfile build hai giai đoạn, 
+# chạy một container tạm thời để build, và tự động xóa khi kết thúc và mount tất cả vào bên trong container
+# để code ngoài thay đổi, code trong container cũng thay đổi theo, cần mount volume, điều này vô tình làm mất đi thư biện đã build trong image
+# --rm -> tự xóa khi kết thúc
+# -v "$(pwd):/app" -> mount /app trong container với curent path bên ngoài
+# -w /app -> làm việc tại thư mục /app
+# node:16-alpine -> môi trường
+# npm install ; npm run build -> RUN
+
+
+# MacOS + Linux
+# docker run --rm -v $(pwd):/app -w /app node:16-alpine npm install && npm run build
+
+# Nếu bạn đang dùng Windows thì command trên sẽ như sau:
+
+# Với Git bash
+# docker run --rm -v "/$(pwd)":/app -w //app node:16-alpine npm install && npm run build
+
+# Với PowerShell
+# docker run --rm -v "$(pwd):/app" -w /app node:16-alpine npm install && npm run build
+
+# Với Command Prompt
+# docker run --rm -v "%cd%:/app" -w /app node:16-alpine npm install && npm run build

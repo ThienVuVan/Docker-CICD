@@ -1,0 +1,30 @@
+version: '3.4'
+services:
+
+  #PHP Service
+  app:
+    image: laravel-project:v1
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+
+  #Nginx Service
+  webserver:
+    image: nginx:1.17-alpine
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+
+# docker-compose exec app composer install
+# vì sao không chạy install trong dockerfile, bởi vì khi chạy khi build image, foler vendor chứa library sẽ
+# được sinh ra, mà khi chạy dockercompose, ta mount volumes vào thì sẽ bị thay đổi theo bên ngoài, folder vendor
+# sẽ biến mất, ta mount volume như vậy nhằm mục địch để code bên ngoài thay đổi thì code bên tron cũng thay đổi.
+# để thay đổi realtime
+
+# tạo key cho project
+# docker-compose exec app php artisan key:generate
+# sudo chwown -R 82:82 .
+
